@@ -1,0 +1,11 @@
+services:
+  db_coches:
+    image: mariadb
+    container_name: mariadb_coches
+    restart: "no"
+    environment:
+      MARIADB_ROOT_PASSWORD: 123456
+    ports:
+      - 3306:3306
+    volumes:
+      - ./COMPONENTS/mariadb_data:/var/lib/mysql
