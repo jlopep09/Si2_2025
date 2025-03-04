@@ -1,8 +1,8 @@
 -- --------------------------------------------------------
 -- Host:                         localhost
--- Versión del servidor:         11.6.2-MariaDB-ubu2404 - mariadb.org binary distribution
+-- Versión del servidor:         11.7.2-MariaDB-ubu2404 - mariadb.org binary distribution
 -- SO del servidor:              debian-linux-gnu
--- HeidiSQL Versión:             12.8.0.6908
+-- HeidiSQL Versión:             12.10.0.7000
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -15,11 +15,11 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 
--- Volcando estructura de base de datos para coches
-CREATE DATABASE IF NOT EXISTS `coches` /*!40100 DEFAULT CHARACTER SET utf8mb3 COLLATE utf8mb3_spanish_ci */;
-USE `coches`;
+-- Volcando estructura de base de datos para IVTM
+CREATE DATABASE IF NOT EXISTS `IVTM` /*!40100 DEFAULT CHARACTER SET utf8mb3 COLLATE utf8mb3_spanish_ci */;
+USE `IVTM`;
 
--- Volcando estructura para tabla coches.contribuyente
+-- Volcando estructura para tabla IVTM.contribuyente
 CREATE TABLE IF NOT EXISTS `contribuyente` (
   `idContribuyente` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(50) NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `contribuyente` (
 
 -- La exportación de datos fue deseleccionada.
 
--- Volcando estructura para tabla coches.ordenanza
+-- Volcando estructura para tabla IVTM.ordenanza
 CREATE TABLE IF NOT EXISTS `ordenanza` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `ayuntamiento` varchar(50) NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS `ordenanza` (
 
 -- La exportación de datos fue deseleccionada.
 
--- Volcando estructura para tabla coches.recibos
+-- Volcando estructura para tabla IVTM.recibos
 CREATE TABLE IF NOT EXISTS `recibos` (
   `numRecibo` int(11) NOT NULL AUTO_INCREMENT,
   `fechaPadron` date NOT NULL,
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS `recibos` (
 
 -- La exportación de datos fue deseleccionada.
 
--- Volcando estructura para tabla coches.vehiculos
+-- Volcando estructura para tabla IVTM.vehiculos
 CREATE TABLE IF NOT EXISTS `vehiculos` (
   `idVehiculo` int(11) NOT NULL AUTO_INCREMENT,
   `tipo` varchar(50) NOT NULL,
