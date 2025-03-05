@@ -23,3 +23,6 @@
 hs_err_pid*
 replay_pid*
 /COMPONENTS/app/GestionVehiculos/nbproject/private/
+/COMPONENTS/app/AppVehiculos/nbproject/private/
+/COMPONENTS/app/AppVehiculos/build/
+/COMPONENTS/app/AppVehiculos/dist/
