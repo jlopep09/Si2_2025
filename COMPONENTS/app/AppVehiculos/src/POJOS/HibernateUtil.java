@@ -41,6 +41,7 @@ public class HibernateUtil {
         sessionFactory = metadata.getSessionFactoryBuilder().build();
 
       } catch (Exception e) {
+        System.out.println("No se ha podido iniciar la sesión de la base de datos. Revise que el servicio esté iniciado y sea accesible");
         e.printStackTrace();
         if (registry != null) {
           StandardServiceRegistryBuilder.destroy(registry);

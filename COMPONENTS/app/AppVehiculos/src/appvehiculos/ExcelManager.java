@@ -1,19 +1,18 @@
 package appvehiculos;
-
-import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.*;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Iterator;
 
 /**
  * @author Jose Antonio Lopez Perez
  *
  * Esta clase es la encargada de leer y modificar el fichero Excel de datos usando
  * la libreria ApachePOI
+ *  EL ORDEN DE LAS COLUMNAS NO VAN A CAMBAIR, LOS TIOS DE DATOS DE LAS COLUMNAS NO VAN A CAMBIAR.
+ *  el LAS ORDENANZAS IGUAL, LOS TRAMOS PARA LOS TURISMOS SON IGUALES EN TODA ESPAÑA, NO DEBERIAN CAMBIAR
  */
 public class ExcelManager {
     XSSFWorkbook ExcelAgua;
