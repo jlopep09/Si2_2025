@@ -20,9 +20,9 @@ import org.hibernate.Transaction;
  * @author José Antonio López Pérez
  */
 public class AppVehiculos {
-
-    public static void main(String[] args) {
-        // TODO code application logic here
+    
+    public static void dia1(){
+         // TODO code application logic here
 
         System.out.println("Iniciando aplicación de gestion IVTM");
         SessionFactory sf = HibernateUtil.getSessionFactory();
@@ -91,6 +91,13 @@ public class AppVehiculos {
         sesion.close();
         HibernateUtil.shutdown();
         System.out.println("Ejecución terminada");
+    
+    }
+
+    public static void main(String[] args) {
+        //dia1();
+        //EL ORDEN DE LAS COLUMNAS NO VAN A CAMBAIR, LOS TIOS DE DATOS DE LAS COLUMNAS NO VAN A CAMBIAR.
+        //eN LAS ORDENANZAS IGUAL, LOS TRAMOS PARA LOS TURISMOS SON IGUALES EN TODA ESPAÑA, NO DEBERIAN CAMBIAR
     }
     
 }
