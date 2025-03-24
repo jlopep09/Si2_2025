@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import org.apache.poi.ss.usermodel.CellType;
 
 /**
  * @author Jose Antonio Lopez Perez
@@ -27,9 +29,6 @@ public class ExcelManager {
 
     }
 
-    ExcelManager() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
     public boolean closeExcel() throws FileNotFoundException {
         if(Excel == null){
             throw new FileNotFoundException("No se ha cargado el archivo excel, usa el metodo openExcel primero");
@@ -63,43 +62,52 @@ public class ExcelManager {
 
 
     public String getCellValue(int sheetNumber, int rowNum, int columNum) throws FileNotFoundException {
-        if(Excel == null){
-            throw new FileNotFoundException("No se ha cargado el archivo excel, usa el metodo openExcel primero");
+        if (Excel == null) {
+            throw new FileNotFoundException("No se ha cargado el archivo Excel, usa el método openExcel primero");
         }
         String result = "";
-        // Obtener la hoja de trabajo (sheet) por su índice (por ejemplo, la primera hoja)
         XSSFSheet sheet = Excel.getSheetAt(sheetNumber);
         XSSFRow row = sheet.getRow(rowNum);
-        if(row == null){
-            System.out.println("Es quiiii");
+
+        if (row == null) {
             return "EMPTYROW";
         }
+
         boolean empty = true;
         for (int i = 0; i < row.getLastCellNum(); i++) {
-            if(row.getCell(i) !=null&&row.getCell(i).getCellType().equals("STRING") && row.getCell(i).getStringCellValue()!=null&& row.getCell(i).getStringCellValue()!=""){
-
+            XSSFCell tempCell = row.getCell(i);
+            if (tempCell != null && tempCell.getCellType() == CellType.STRING 
+                && tempCell.getStringCellValue() != null && !tempCell.getStringCellValue().isEmpty()) {
                 empty = false;
                 break;
-            }else{
-                empty = false;
-                break;
-            }
+            } 
         }
-        if(empty){
-            System.out.println("Es quiiii");
+
+        if (empty) {
             return "EMPTYROW";
         }
+
         XSSFCell cell = row.getCell(columNum);
-        if(cell == null){
+        if (cell == null || cell.getRawValue()==null) {
             return "";
         }
-        if(cell.getCellType().equals("STRING")){
-            result = cell.getStringCellValue();
-        }else{
-            if(cell == null ||cell.getRawValue() == null ||cell.getRawValue().isEmpty()){return "EMPTYROW";}
-            result = cell.getRawValue().toString();
+
+        switch (cell.getCellType()) {
+            case STRING:
+                result = cell.getStringCellValue();
+                break;
+            case NUMERIC:
+                // Forzar a BigDecimal para evitar problemas con números largos
+                BigDecimal bd = new BigDecimal(cell.getNumericCellValue());
+                result = bd.toPlainString();
+                break;
+            case BOOLEAN:
+                result = Boolean.toString(cell.getBooleanCellValue());
+                break;
+            default:
+                result = cell.getRawValue();
         }
-        
+
         return result;
     }
     public boolean setCellValue(int sheetNumber, int rowNum, int columNum, String newValue) throws IOException {

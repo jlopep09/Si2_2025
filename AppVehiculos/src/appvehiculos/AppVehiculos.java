@@ -4,12 +4,11 @@ package appvehiculos;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+//Si el iban no son todo digitos o si no tiene el nim correcto no se arregla, se marca como irreparable
 
 import POJOS.Contribuyente;
 import POJOS.HibernateUtil;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
 
 
 /**
@@ -28,14 +27,14 @@ public class AppVehiculos {
         
         for (int i = 1; i < numRows; i++) {
             String nifnie = excelVehiculos.getCellValue(0, i, 0);
-            if(nifnie.equals("EMPTYROW")){
-                System.out.println("NIFVACIO");
+            if(nifnie!=null && nifnie.equals("EMPTYROW")){
+                //System.out.println("NIFVACIO");
                 continue;}
-            System.out.println("Comprobando el nif "+nifnie);
+            //System.out.println("Comprobando el nif "+ nifnie + "de la fila columna "+ i +"-"+0);
             boolean isCorrect = NifNieValidator.check(nifnie);
 
             if(!isCorrect){
-                System.out.println("Se ha detectado un nif irreparable");
+                //System.out.println("Se ha detectado un nif irreparable");
                 Contribuyente cont = new Contribuyente();
                 cont.setNifnie(nifnie);
                 cont.setIdContribuyente(i);
