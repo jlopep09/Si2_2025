@@ -30,7 +30,7 @@ public class AppVehiculos {
             if(nifnie!=null && nifnie.equals("EMPTYROW")){
                 //System.out.println("NIFVACIO");
                 continue;}
-            //System.out.println("Comprobando el nif "+ nifnie + "de la fila columna "+ i +"-"+0);
+            //System.out.println("Comprobando el nif "+ nifnie + " de la fila columna "+ i + "-" + 0);
             boolean isCorrect = NifNieValidator.check(nifnie);
 
             if(!isCorrect){
@@ -41,7 +41,7 @@ public class AppVehiculos {
                 cont.setApellido1(excelVehiculos.getCellValue(0, i, 1));
                 cont.setApellido2(excelVehiculos.getCellValue(0, i, 2));
                 cont.setNombre(excelVehiculos.getCellValue(0, i, 3));
-                String error ="";
+                String error = "";
                 if(nifnie.equals("")){
                     error = "NIF BLANCO";
                 }else{
