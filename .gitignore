@@ -6,3 +6,5 @@ replay_pid*
 /AppVehiculos/nbproject/private/
 /AppVehiculos/build/
 /AppVehiculos/dist/
+*/.idea/*
+.idea

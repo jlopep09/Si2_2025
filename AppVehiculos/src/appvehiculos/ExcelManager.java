@@ -1,4 +1,5 @@
 package appvehiculos;
+import com.microsoft.schemas.office.visio.x2012.main.RowType;
 import org.apache.poi.xssf.usermodel.*;
 
 import java.io.FileInputStream;
@@ -27,6 +28,11 @@ public class ExcelManager {
         this.suffix = suffix;
         openExcel();
 
+    }
+    public enum cellType {
+        EMPTYROW,
+        EMPTYCELL,
+        CELL
     }
 
     public boolean closeExcel() throws FileNotFoundException {
@@ -60,55 +66,52 @@ public class ExcelManager {
         return sheet.getLastRowNum()+1;
     }
 
-
+    /**
+     * Returns EMPTYROW(row == null o completamente vacia), The value or EMPTYCELL(cell sin valores en una row con otros datos)
+     *
+     * */
     public String getCellValue(int sheetNumber, int rowNum, int columNum) throws FileNotFoundException {
-        if (Excel == null) {
-            throw new FileNotFoundException("No se ha cargado el archivo Excel, usa el método openExcel primero");
-        }
-        String result = "";
+        if (Excel == null) { throw new FileNotFoundException("No se ha cargado el archivo Excel, usa el método openExcel primero");}
         XSSFSheet sheet = Excel.getSheetAt(sheetNumber);
+        if (sheet == null) { throw new IllegalArgumentException("No se ha encontrado la hoja solicitada del excel");}
         XSSFRow row = sheet.getRow(rowNum);
-
-        if (row == null) {
-            return "EMPTYROW";
+        //Comprueba que no sea una fila inicializada con celdas vacias
+        if (row == null || row.getPhysicalNumberOfCells() == 0) {
+            return cellType.EMPTYROW.toString();
         }
-
-        boolean empty = true;
+        // Verificar si todas las celdas de la fila están vacías
+        boolean isEmptyRow = true;
         for (int i = 0; i < row.getLastCellNum(); i++) {
             XSSFCell tempCell = row.getCell(i);
-            if (tempCell != null && tempCell.getCellType() == CellType.STRING 
-                && tempCell.getStringCellValue() != null && !tempCell.getStringCellValue().isEmpty()) {
-                empty = false;
+            if (tempCell != null && tempCell.getCellType() != CellType.BLANK) {
+                isEmptyRow = false;
                 break;
-            } 
+            }
         }
 
-        if (empty) {
-            return "EMPTYROW";
+        if (isEmptyRow) {
+            return cellType.EMPTYROW.toString();
         }
 
         XSSFCell cell = row.getCell(columNum);
-        if (cell == null || cell.getRawValue()==null) {
-            return "";
+        if (cell == null || cell.getCellType() == CellType.BLANK) {
+            return cellType.EMPTYCELL.toString();
         }
-
+        return getCellValueAsString(cell);
+    }
+    private String getCellValueAsString(XSSFCell cell) {
         switch (cell.getCellType()) {
             case STRING:
-                result = cell.getStringCellValue();
-                break;
+                return cell.getStringCellValue().trim();
             case NUMERIC:
-                // Forzar a BigDecimal para evitar problemas con números largos
-                BigDecimal bd = new BigDecimal(cell.getNumericCellValue());
-                result = bd.toPlainString();
-                break;
+                return String.valueOf(cell.getNumericCellValue());
             case BOOLEAN:
-                result = Boolean.toString(cell.getBooleanCellValue());
-                break;
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                return cell.getCellFormula();
             default:
-                result = cell.getRawValue();
+                return "";
         }
-
-        return result;
     }
     public boolean setCellValue(int sheetNumber, int rowNum, int columNum, String newValue) throws IOException {
         if(Excel == null){
