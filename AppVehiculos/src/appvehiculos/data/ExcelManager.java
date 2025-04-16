@@ -1,12 +1,11 @@
-package appvehiculos;
-import com.microsoft.schemas.office.visio.x2012.main.RowType;
+package appvehiculos.data;
 import org.apache.poi.xssf.usermodel.*;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.math.BigDecimal;
+
 import org.apache.poi.ss.usermodel.CellType;
 
 /**
@@ -126,9 +125,10 @@ public class ExcelManager {
         }
         XSSFCell cell = row.getCell(columNum);
         if(cell == null){
-            return false;
+            cell = row.createCell(columNum);  
         }
         cell.setCellValue(newValue);
+
         FileOutputStream fos = new FileOutputStream(this.rute + this.fileName + this.suffix + ".xlsx");
         Excel.write(fos);
         fos.close();

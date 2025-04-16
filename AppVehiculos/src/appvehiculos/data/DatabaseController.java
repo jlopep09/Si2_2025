@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package appvehiculos;
+package appvehiculos.data;
 
 import POJOS.Contribuyente;
 import POJOS.HibernateUtil;
