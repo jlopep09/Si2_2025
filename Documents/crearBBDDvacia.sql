@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS `recibos` (
   `valorUnidad` double NOT NULL,
   `totalRecibo` double NOT NULL,
   `exencion` char(1) COLLATE utf8mb3_spanish_ci DEFAULT NULL,
-  `bonificacion` char(1) COLLATE utf8mb3_spanish_ci DEFAULT NULL,
+  `bonificacion` double DEFAULT NULL,
   `email` varchar(50) COLLATE utf8mb3_spanish_ci DEFAULT NULL,
   `ayuntamiento` varchar(50) COLLATE utf8mb3_spanish_ci NOT NULL,
   `idContribuyente` int NOT NULL,
