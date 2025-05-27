@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Recibos fechaPadron="IVTM de 2025" totalPadron="885,94" numeroTotalRecibos="10">
+  <Recibo idRecibo="1">
+    <Exencion>N</Exencion>
+    <idFilaExcelVehiculo>2</idFilaExcelVehiculo>
+    <nombre>Cecilia</nombre>
+    <primerApellido>Garcia</primerApellido>
+    <segundoApellido>Montiel</segundoApellido>
+    <NIF>09720969L</NIF>
+    <IBAN>ES0425516848021156151054</IBAN>
+    <tipoVehiculo>TURISMO</tipoVehiculo>
+    <marcaModelo>FORD ESCORT</marcaModelo>
+    <matricula>H1258B</matricula>
+    <totalRecibo>20.95</totalRecibo>
+  </Recibo>
+  <Recibo idRecibo="2">
+    <Exencion>N</Exencion>
+    <idFilaExcelVehiculo>5</idFilaExcelVehiculo>
+    <nombre>Ana Belen</nombre>
+    <primerApellido>Lombas</primerApellido>
+    <segundoApellido>Olle</segundoApellido>
+    <NIF>09722827Z</NIF>
+    <IBAN>ES2766649444162310000255</IBAN>
+    <tipoVehiculo>TRACTOR</tipoVehiculo>
+    <marcaModelo>JOHN DEERE C37</marcaModelo>
+    <matricula>E2569ABD</matricula>
+    <totalRecibo>29.9</totalRecibo>
+  </Recibo>
+  <Recibo idRecibo="3">
+    <Exencion>N</Exencion>
+    <idFilaExcelVehiculo>7</idFilaExcelVehiculo>
+    <nombre>Generoso</nombre>
+    <primerApellido>Martin</primerApellido>
+    <segundoApellido>Martin</segundoApellido>
+    <NIF>09723206W</NIF>
+    <IBAN>FR5623185484465641685100</IBAN>
+    <tipoVehiculo>TURISMO</tipoVehiculo>
+    <marcaModelo>RENAULT MEGANE</marcaModelo>
+    <matricula>LE0010L</matricula>
+    <totalRecibo>87.75</totalRecibo>
+  </Recibo>
+  <Recibo idRecibo="4">
+    <Exencion>N</Exencion>
+    <idFilaExcelVehiculo>14</idFilaExcelVehiculo>
+    <nombre>Encarnacion</nombre>
+    <primerApellido>Lopez</primerApellido>
+    <segundoApellido>Riverto</segundoApellido>
+    <NIF>09737592J</NIF>
+    <IBAN>ES2396536214865214585214</IBAN>
+    <tipoVehiculo>AUTOBUS</tipoVehiculo>
+    <marcaModelo>VOLVO F320</marcaModelo>
+    <matricula>2568POR</matricula>
+    <totalRecibo>140.15</totalRecibo>
+  </Recibo>
+  <Recibo idRecibo="5">
+    <Exencion>N</Exencion>
+    <idFilaExcelVehiculo>16</idFilaExcelVehiculo>
+    <nombre>Herminia</nombre>
+    <primerApellido>Almanzar</primerApellido>
+    <segundoApellido>Robles</segundoApellido>
+    <NIF>09738099Z</NIF>
+    <IBAN>FI5024587946032003165464</IBAN>
+    <tipoVehiculo>AUTOBUS</tipoVehiculo>
+    <marcaModelo>SCANIA R4787</marcaModelo>
+    <matricula>SO25697</matricula>
+    <totalRecibo>120.25</totalRecibo>
+  </Recibo>
+  <Recibo idRecibo="6">
+    <Exencion>N</Exencion>
+    <idFilaExcelVehiculo>23</idFilaExcelVehiculo>
+    <nombre>Marta</nombre>
+    <primerApellido>Lopez</primerApellido>
+    <segundoApellido>Getino</segundoApellido>
+    <NIF>09762197P</NIF>
+    <IBAN>DE9301821135910205540000</IBAN>
+    <tipoVehiculo>TRACTOR</tipoVehiculo>
+    <marcaModelo>JOHN DEERE G86</marcaModelo>
+    <matricula>M325417</matricula>
+    <totalRecibo>210.0</totalRecibo>
+  </Recibo>
+  <Recibo idRecibo="7">
+    <Exencion>N</Exencion>
+    <idFilaExcelVehiculo>30</idFilaExcelVehiculo>
+    <nombre>Cecilia</nombre>
+    <primerApellido>Garcia</primerApellido>
+    <segundoApellido>Montiel</segundoApellido>
+    <NIF>09720969L</NIF>
+    <IBAN>ES0425516848021156151054</IBAN>
+    <tipoVehiculo>MOTOCICLETA</tipoVehiculo>
+    <marcaModelo>YAMAHA MTN850-A</marcaModelo>
+    <matricula>1261ABC</matricula>
+    <totalRecibo>8.84</totalRecibo>
+  </Recibo>
+  <Recibo idRecibo="8">
+    <Exencion>N</Exencion>
+    <idFilaExcelVehiculo>31</idFilaExcelVehiculo>
+    <nombre>Genaro</nombre>
+    <primerApellido>Moncada</primerApellido>
+    <segundoApellido>Morala</segundoApellido>
+    <NIF>09722535K</NIF>
+    <IBAN>PT5764578946740051516490</IBAN>
+    <tipoVehiculo>MOTOCICLETA</tipoVehiculo>
+    <marcaModelo>HONDA SCOOTER300</marcaModelo>
+    <matricula>1262ABC</matricula>
+    <totalRecibo>45.45</totalRecibo>
+  </Recibo>
+  <Recibo idRecibo="9">
+    <Exencion>N</Exencion>
+    <idFilaExcelVehiculo>32</idFilaExcelVehiculo>
+    <nombre>Clara</nombre>
+    <primerApellido>Sanchez</primerApellido>
+    <segundoApellido>Nuñez</segundoApellido>
+    <NIF>09722591P</NIF>
+    <IBAN>ES4534698752714600549403</IBAN>
+    <tipoVehiculo>MOTOCICLETA</tipoVehiculo>
+    <marcaModelo>HONDA CBR600F</marcaModelo>
+    <matricula>1263ABC</matricula>
+    <totalRecibo>29.25</totalRecibo>
+  </Recibo>
+  <Recibo idRecibo="10">
+    <Exencion>N</Exencion>
+    <idFilaExcelVehiculo>40</idFilaExcelVehiculo>
+    <nombre>Genaro</nombre>
+    <primerApellido>Moncada</primerApellido>
+    <segundoApellido>Morala</segundoApellido>
+    <NIF>09722535K</NIF>
+    <IBAN>PT5764578946740051516490</IBAN>
+    <tipoVehiculo>TURISMO</tipoVehiculo>
+    <marcaModelo>CITROEN XSARA PICASSO 40</marcaModelo>
+    <matricula>2365ABG</matricula>
+    <totalRecibo>193.4</totalRecibo>
+  </Recibo>
+</Recibos>

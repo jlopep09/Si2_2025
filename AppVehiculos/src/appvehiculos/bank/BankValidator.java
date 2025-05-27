@@ -1,7 +1,5 @@
 package appvehiculos.bank;
 import POJOS.Contribuyente;
-
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -65,13 +63,13 @@ public class BankValidator {
         else if (contador == 10) return 1 + "";
         else return 0 + "";
     }
-    public static String getXML(Contribuyente cont,String error) throws IOException {
+    public static String getXML(Contribuyente cont,String error, String wrongCCC) throws IOException {
         StringBuilder sb = new StringBuilder();
-        sb.append("  <Cuenta id=\"").append(cont.getIdContribuyente()).append("\">\n");
+        sb.append("  <Cuenta id=\"").append((cont.getIdContribuyente() +1) ).append("\">\n");
         sb.append("    <Nombre>").append(cont.getNombre()).append("</Nombre>\n");
         sb.append("    <Apellidos>").append(cont.getApellido1()).append(" ").append(cont.getApellido2()).append("</Apellidos>\n");
         sb.append("    <NIFNIE>").append(cont.getNifnie()).append("</NIFNIE>\n");
-        sb.append("    <CCCErroneo>").append(cont.getCcc()).append("</CCCErroneo>\n");
+        sb.append("    <CCCErroneo>").append(wrongCCC).append("</CCCErroneo>\n");
         if(error.isEmpty()){
             sb.append("    <IBANCorrecto>").append(cont.getIban()).append("</IBANCorrecto>\n");
         }else{

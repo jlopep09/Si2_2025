@@ -24,7 +24,7 @@ public class Recibos  implements java.io.Serializable {
      private double valorUnidad;
      private double totalRecibo;
      private Character exencion;
-     private Character bonificacion;
+     private double bonificacion;
      private String email;
      private String ayuntamiento;
 
@@ -165,11 +165,11 @@ public class Recibos  implements java.io.Serializable {
     public void setExencion(Character exencion) {
         this.exencion = exencion;
     }
-    public Character getBonificacion() {
+    public double getBonificacion() {
         return this.bonificacion;
     }
     
-    public void setBonificacion(Character bonificacion) {
+    public void setBonificacion(double bonificacion) {
         this.bonificacion = bonificacion;
     }
     public String getEmail() {

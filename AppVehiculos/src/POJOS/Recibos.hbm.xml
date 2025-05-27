@@ -47,8 +47,8 @@
         <property name="exencion" type="java.lang.Character">
             <column name="exencion" length="1" />
         </property>
-        <property name="bonificacion" type="java.lang.Character">
-            <column name="bonificacion" length="1" />
+        <property name="bonificacion" type="double">
+            <column name="bonificacion" length="50" />
         </property>
         <property name="email" type="string">
             <column name="email" length="50" />

@@ -1,55 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Cuentas>
-  <Cuenta id="4">
-    <Nombre>Alencar</Nombre>
-    <Apellidos>Lidiane Nuñez</Apellidos>
-    <NIFNIE>09685694A</NIFNIE>
-    <CCCErroneo>245619375215464975</CCCErroneo>
-    <TipoError>IMPOSIBLE GENERAR IBAN</TipoError>
-  </Cuenta>
-  <Cuenta id="5">
-    <Nombre>Rocio</Nombre>
-    <Apellidos>Gil Olle</Apellidos>
-    <NIFNIE>09688492H</NIFNIE>
-    <CCCErroneo>365201256384510125RR</CCCErroneo>
-    <TipoError>IMPOSIBLE GENERAR IBAN</TipoError>
-  </Cuenta>
-  <Cuenta id="6">
-    <Nombre>Soledad</Nombre>
-    <Apellidos>Diez Orejas</Apellidos>
-    <NIFNIE>09693306W</NIFNIE>
-    <CCCErroneo>215465</CCCErroneo>
-    <TipoError>IMPOSIBLE GENERAR IBAN</TipoError>
-  </Cuenta>
-  <Cuenta id="50">
+  <Cuenta id="25">
     <Nombre>Israel</Nombre>
     <Apellidos>Amo Gonzalez</Apellidos>
     <NIFNIE>09763856B</NIFNIE>
     <CCCErroneo>2096004304307570000</CCCErroneo>
     <TipoError>IMPOSIBLE GENERAR IBAN</TipoError>
   </Cuenta>
-  <Cuenta id="51">
+  <Cuenta id="26">
     <Nombre>Gabriel</Nombre>
     <Apellidos>Prieto Gonzalez</Apellidos>
     <NIFNIE>09768995K</NIFNIE>
     <CCCErroneo>2563547832100254122</CCCErroneo>
     <TipoError>IMPOSIBLE GENERAR IBAN</TipoError>
   </Cuenta>
-  <Cuenta id="52">
+  <Cuenta id="27">
     <Nombre>Ruben Dario</Nombre>
     <Apellidos>Garcia Gracia</Apellidos>
     <NIFNIE>09770039F</NIFNIE>
     <CCCErroneo>3215469719542312100</CCCErroneo>
     <TipoError>IMPOSIBLE GENERAR IBAN</TipoError>
   </Cuenta>
-  <Cuenta id="53">
+  <Cuenta id="28">
     <Nombre>Alencar</Nombre>
     <Apellidos>Pasado Guerra</Apellidos>
     <NIFNIE>09774163Z</NIFNIE>
     <CCCErroneo>3652145273650065848</CCCErroneo>
     <TipoError>IMPOSIBLE GENERAR IBAN</TipoError>
   </Cuenta>
-  <Cuenta id="54">
+  <Cuenta id="29">
     <Nombre>Alencar</Nombre>
     <Apellidos>Fresco Gutierrez</Apellidos>
     <NIFNIE>09774199G</NIFNIE>

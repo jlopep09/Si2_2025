@@ -1,4 +1,4 @@
-package appvehiculos;
+package appvehiculos.utilities;
 
 public class Constantes {
     public enum ColumnasContribuyentes {
@@ -55,10 +55,14 @@ public class Constantes {
         }
     }
     public enum ColumnasOrdenanzas {
-        CORRECTO(0),
-        SUBSANADO(1),
-        ERRONEO(2),
-        IRREPARABLE(3);
+        SHEET(0),
+        AYUNTAMIENTO(0),
+        TIPOVEHICULO(1),
+        UNIDAD(2),
+        MINIMO(3),
+        MAXIMO(4),
+        IMPORTE(5);
+
 
         private final int valor;
 

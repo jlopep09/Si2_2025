@@ -26,7 +26,7 @@ public class NifNieValidator {
     /*
     Retorna false si no tiene un formato valido/reparable y por tanto se debe generar un xml.
     */
-    public static boolean check(ArrayList<String> nifsList,String text, ExcelManager excelVehiculos, int row, int nifnieColumn) {
+    public static boolean check(ArrayList<String> nifsList,String text, ExcelManager excelVehiculos, int row, int nifnieColumn, Contribuyente cont) {
         boolean valid = true;
         if(!Character.isDigit(text.charAt(0)) && text.charAt(0)!='X'&& text.charAt(0)!='Y'&& text.charAt(0)!='Z'){
             return false;
@@ -53,9 +53,9 @@ public class NifNieValidator {
         }
         //Formato valido
         if(Character.isDigit(text.charAt(0))){
-            return checkNif( nifsList,text, excelVehiculos, row, nifnieColumn);
+            return checkNif( nifsList,text, excelVehiculos, row, nifnieColumn, cont);
         }else{
-            return checkNie( nifsList,text, excelVehiculos, row, nifnieColumn);
+            return checkNie( nifsList,text, excelVehiculos, row, nifnieColumn, cont);
         }
     }
     public static String getFixedNifNie_NoExcelChange_NoCheckFormat(String text){
@@ -95,22 +95,22 @@ public class NifNieValidator {
         }
 
     }
-    private static boolean checkNie(ArrayList<String> nifsList,String text, ExcelManager excelVehiculos, int row, int nifnieColumn) {
+    private static boolean checkNie(ArrayList<String> nifsList,String text, ExcelManager excelVehiculos, int row, int nifnieColumn, Contribuyente cont) {
         String NIEchars = "XYZ";
         String digits = NIEchars.indexOf(text.charAt(0)) + text.substring(1,8);
         if(text.length() == 9){
             if(text.charAt(8) != getControlLetter(digits)){
                 //Fix nie sin avisar.
-                return fixNie(nifsList,digits, excelVehiculos, row, nifnieColumn);
+                return fixNie(nifsList,digits, excelVehiculos, row, nifnieColumn, cont);
             }
         }else{//falta digito de control
-            return fixNie(nifsList,digits, excelVehiculos, row, nifnieColumn);
+            return fixNie(nifsList,digits, excelVehiculos, row, nifnieColumn, cont);
         }
 
         return true;
 
     }
-    private static boolean fixNie(ArrayList<String> nifsList,String digits, ExcelManager excelVehiculos, int row, int nifnieColumn) {
+    private static boolean fixNie(ArrayList<String> nifsList,String digits, ExcelManager excelVehiculos, int row, int nifnieColumn, Contribuyente cont) {
         char controlLetter = getControlLetter(digits);
         String NIEchars = "XYZ";
         String correctedNie = NIEchars.charAt(digits.charAt(0)) + digits.substring(1)+ controlLetter;
@@ -119,6 +119,7 @@ public class NifNieValidator {
                 return false;
             }
             excelVehiculos.setCellValue(0, row, nifnieColumn, correctedNie);
+            cont.setNifnie(correctedNie);
 
         }catch (Exception e){
             System.out.println("No se ha podido arreglar el nie de la fila-columna "+row+"-"+nifnieColumn);
@@ -127,23 +128,23 @@ public class NifNieValidator {
         return true;
     }
 
-    private static boolean checkNif(ArrayList<String> nifsList,String text, ExcelManager excelVehiculos, int row, int nifnieColumn) {
+    private static boolean checkNif(ArrayList<String> nifsList,String text, ExcelManager excelVehiculos, int row, int nifnieColumn, Contribuyente cont) {
 
         String digits = text.substring(0,8);
         char controlLetter = getControlLetter(digits);
 
         if(text.length() == 9){
             if(text.charAt(8) != controlLetter){
-                return fixNif(nifsList,digits, excelVehiculos, row, nifnieColumn);
+                return fixNif(nifsList,digits, excelVehiculos, row, nifnieColumn, cont);
             }
         }else{//falta digito de control
-            return fixNif(nifsList,digits, excelVehiculos, row, nifnieColumn);
+            return fixNif(nifsList,digits, excelVehiculos, row, nifnieColumn, cont);
         }
 
         return true;
 
     }
-    private static boolean fixNif(ArrayList<String> nifsList,String digits, ExcelManager excelVehiculos, int row, int nifnieColumn) {
+    private static boolean fixNif(ArrayList<String> nifsList,String digits, ExcelManager excelVehiculos, int row, int nifnieColumn, Contribuyente cont) {
         char controlLetter = getControlLetter(digits);
         //TODO actualizar en el excel el nuevo nif
         
@@ -153,6 +154,7 @@ public class NifNieValidator {
                 return false;
             }
             excelVehiculos.setCellValue(0, row, nifnieColumn, correctedNif);
+            cont.setNifnie(correctedNif);
         }catch (Exception e){
             System.out.println("No se ha podido arreglar el nif de la fila-columna "+row+"-"+nifnieColumn);
             return false;

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Recibos fechaPadron="IVTM de 2025" totalPadron="9999,99" numeroTotalRecibos="3">
+  <Recibo idRecibo="1">
+    <Exencion>N</Exencion>
+    <idFilaExcelVehiculo>3</idFilaExcelVehiculo>
+    <nombre>Miguel angel</nombre>
+    <primerApellido>Quintanilla</primerApellido>
+    <segundoApellido>Fernandez</segundoApellido>
+    <NIF>09715890T</NIF>
+    <IBAN>ES5023455254943263234457</IBAN>
+    <tipoVehiculo>REMOLQUE</tipoVehiculo>
+    <marcaModelo>JOHN DEERE F90</marcaModelo>
+    <matricula>M125VE</matricula>
+    <totalRecibo>46.9</totalRecibo>
+  </Recibo>
+  <Recibo idRecibo="2">
+    <Exencion>N</Exencion>
+    <idFilaExcelVehiculo>4</idFilaExcelVehiculo>
+    <nombre>Dorina</nombre>
+    <primerApellido>Gonzalez</primerApellido>
+    <segundoApellido>Rodriguez</segundoApellido>
+    <NIF>09713528F</NIF>
+    <IBAN>IT8915953684811254695203</IBAN>
+    <tipoVehiculo>TRACTOR</tipoVehiculo>
+    <marcaModelo>JOHN DEERE N91</marcaModelo>
+    <matricula>LE2500VE</matricula>
+    <totalRecibo>46.9</totalRecibo>
+  </Recibo>
+  <Recibo idRecibo="3">
+    <Exencion>N</Exencion>
+    <idFilaExcelVehiculo>5</idFilaExcelVehiculo>
+    <nombre>Antonio</nombre>
+    <primerApellido>Garcia</primerApellido>
+    <segundoApellido>Rodriguez</segundoApellido>
+    <NIF>09713007S</NIF>
+    <IBAN>AT6825030000114574745458</IBAN>
+    <tipoVehiculo>TRACTOR</tipoVehiculo>
+    <marcaModelo>JOHN DEERE C37</marcaModelo>
+    <matricula>E2569ABD</matricula>
+    <totalRecibo>29.9</totalRecibo>
+  </Recibo>
+</Recibos>

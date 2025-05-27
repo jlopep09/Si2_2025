@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Vehiculos>
+  <Vehiculo id="2">
+    <Marca>FORD</Marca>
+    <Modelo>ESCORT 5 PUERTAS</Modelo>
+    <Error>Fechas incoherentes.</Error>
+  </Vehiculo>
+  <Vehiculo id="6">
+    <Marca>YAMAHA</Marca>
+    <Modelo>GR900</Modelo>
+    <Error>Matricula Erronea.</Error>
+  </Vehiculo>
+  <Vehiculo id="7">
+    <Marca>RENAULT</Marca>
+    <Modelo>MEGANE</Modelo>
+    <Error>Vehiculo sin propietario.</Error>
+  </Vehiculo>
+  <Vehiculo id="9">
+    <Marca>RENAULT</Marca>
+    <Modelo>ESPACE 2.0</Modelo>
+    <Error>Matricula Erronea. Vehiculo sin propietario.</Error>
+  </Vehiculo>
+  <Vehiculo id="11">
+    <Marca>OPEL</Marca>
+    <Modelo>ASTRA</Modelo>
+    <Error>Vehiculo con propietario erróneo.</Error>
+  </Vehiculo>
+</Vehiculos>

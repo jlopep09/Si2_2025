@@ -1,250 +1,588 @@
 package appvehiculos.recibos;
 import POJOS.*;
-import java.io.File;
-import java.io.FileNotFoundException;
+import static appvehiculos.data.DatabaseController.saveRecibo;
+import static appvehiculos.data.DatabaseController.saveVehiculo;
+import static appvehiculos.recibos.CalculadoraImporte.getTrimestres;
+import static appvehiculos.recibos.CalculadoraImporte.getUnidadValorString;
+import static appvehiculos.utilities.IvtmManager.subirVehiculosBBDD;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.sql.Date;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
+import java.util.*;
 
 public class GeneradorRecibo {
-    private CalculadoraImportes calculadora;
+    private ArrayList<Ordenanza> listadoOrdenanzas;
+    private ArrayList<Vehiculos> listadoVehiculos;
+    private ArrayList<Contribuyente> listadoContribuyentesValidos;
 
-
-    public GeneradorRecibo(){
-        calculadora = new CalculadoraImportes();
+    public GeneradorRecibo(ArrayList<Ordenanza> listadoOrdenanzas, ArrayList<Vehiculos> listadoVehiculos, ArrayList<Contribuyente> listadoContribuyentesValidos) {
+        this.listadoOrdenanzas = listadoOrdenanzas;
+        this.listadoVehiculos = listadoVehiculos;
+        this.listadoContribuyentesValidos = listadoContribuyentesValidos;
     }
 
-    public void generarRecibos(String periodo) throws IOException {
-
-        //Objetenemos un listado de columnas de los usuarios que no tienen errores de nif ni banco
-        ArrayList<String> listadoValidos = BankController.getValidUserRows();
-        float contadorBaseImponible = 0;
-        float contadorIva = 0;
-        int contadorRecibos = numeroPrimerRecibo + 1;
-        ArrayList<Ordenanza> listaOrdenanzas = calculadora.listaOrdenanzasDDBB;
-        //Obtener los valores de bImponible e iva y los suma al contador global
-        for (int i = 1; i < ExcelManager.getRowsCount(userSheetNumber); i++) {
-            if(!listadoValidos.contains(i+"")) continue;
-            if(!isRowInPeriod(periodo, i)) continue;
-            String cellValue = ExcelManager.getCellValue(userSheetNumber, i, 3);
-            if (cellValue.equals("EMPTYROW") ) continue;
-            String[] idImportes = ExcelManager.getCellValue(userSheetNumber,i,16).split(" ");
-
-            float baseImp = 0;
-            for (int j = 0; j < idImportes.length; j++) {
-                baseImp+= calculadora.getImporte(Integer.parseInt(idImportes[j]),i);
+    public void generarRecibos(String periodo, ArrayList<Recibos> nuevosRecibos) throws IOException, ParseException {
+        StringBuilder sbRecibos = new StringBuilder();
+        StringBuilder sbErrores = new StringBuilder();
+        int contadorRecibos = 0;
+        float totalRecibos = 0f;
+        for (int i = 0; i < this.listadoVehiculos.size(); i++) {
+            Vehiculos vehiculo = this.listadoVehiculos.get(i);
+            if(vehiculo.getTipo().toLowerCase().equals("automovil")){
+                continue;
             }
-            float ivaCalculado = 0;
+            //Obtenemos los errores del vehiculo
+            ArrayList<String> listadoErrores = new ArrayList<>();
+            obtenerErroresVehiculo(periodo, vehiculo, listadoErrores);
 
-            for (int j = 0; j < idImportes.length; j++) {
-                ivaCalculado+= calculadora.getIva(Integer.parseInt(idImportes[j]),i);
-            }
-            try{
-                if(ExcelManager.getCellValue(userSheetNumber, i, columnaExcencion).equals(exencion)){
-                    baseImp = 0f;
-                    ivaCalculado = 0f;
+            if(listadoErrores.isEmpty()) {
+                //Generar recibo
+                int trimestres = getTrimestres(vehiculo, periodo);
+                if(trimestres == 0){
+                    continue;
                 }
-            }catch(Exception e){e.printStackTrace();}
-            contadorBaseImponible +=baseImp;
-            contadorIva += ivaCalculado;
-            //Obtener valores necesarios para la generacion del recibo xml
-            String excencion = ExcelManager.getCellValue(userSheetNumber,i,10);
-            String idFilaExcel = (i+1)+"";
-            String nombre = ExcelManager.getCellValue(userSheetNumber,i,0);
-            String primerApellido = ExcelManager.getCellValue(userSheetNumber,i,1);
-            String segundoApellido = ExcelManager.getCellValue(userSheetNumber,i,2);
-            String NIF = ExcelManager.getCellValue(userSheetNumber,i,3);
-            String IBAN = ExcelManager.getCellValue(userSheetNumber,i,8);
-            String lecturaActual = ExcelManager.getCellValue(userSheetNumber,i,13);
-            String lecturaAnterior = ExcelManager.getCellValue(userSheetNumber,i,12);
-            float metros = Float.parseFloat(ExcelManager.getCellValue(userSheetNumber,i, 13)) - Float.parseFloat(ExcelManager.getCellValue(0,i, 12));
-            String consumo = metros+"";
-            String baseImponibleRecibo = baseImp+"";
-            String ivaRecibo = ivaCalculado+"";
-            String totalRecibo = (baseImp+ivaCalculado)+"";
-            //Genero la entrada en el xml
-            generarXMLRecibo(((contadorRecibos)+""), excencion, idFilaExcel,nombre,primerApellido, segundoApellido,NIF,IBAN,lecturaActual,lecturaAnterior,consumo,baseImponibleRecibo,ivaRecibo,totalRecibo, contadorBaseImponible+"", contadorIva+"", (contadorBaseImponible+contadorIva)+"",periodo);
-            generarReciboPDF( i,  periodo,  calculadora,  Float.parseFloat(baseImponibleRecibo),  Float.parseFloat(ivaRecibo));
-            contadorRecibos++;
-            Date fechaAltaDate;
-            Date fechaBajaDate;
-            try{
-                 //System.out.println(getDateInDateFormat(convertExcelDateToString(ExcelManager.getCellValue(userSheetNumber, i , columnaFechaAlta))));
-                 fechaAltaDate = Date.valueOf(getDateInDateFormat(convertExcelDateToString(ExcelManager.getCellValue(userSheetNumber, i , columnaFechaAlta))));
-            }catch(Exception e){
-                e.printStackTrace();
-                fechaAltaDate = new Date(1999,1,1);
-            }
-            try{
-                fechaBajaDate = Date.valueOf(getDateInDateFormat(convertExcelDateToString(ExcelManager.getCellValue(userSheetNumber, i , columnaFechaBaja))));
-            }catch(Exception e){
+                float importes[] = CalculadoraImporte.getImporte(vehiculo, this.listadoOrdenanzas, periodo);
+                float totalRecibo = importes[1] ;
+                //float totalRecibo = 90f;
+                totalRecibos += totalRecibo;
+                sbRecibos.append(GeneradorRecibosXML.getXMLRecibo(vehiculo, totalRecibo, (contadorRecibos+1)));
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                LocalDate fechaHoy = LocalDate.now();
+                DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                String fechaFormateada = fechaHoy.format(formato);
+                Recibos nuevoRecibo = new Recibos(
+                        (contadorRecibos+1), 
+                        vehiculo.getContribuyente(), 
+                        vehiculo, 
+                        sdf.parse("1/1/"+periodo), 
+                        sdf.parse(fechaFormateada),
+                        vehiculo.getContribuyente().getNifnie(),
+                        (vehiculo.getContribuyente().getDireccion() + " " + vehiculo.getContribuyente().getNumero()),
+                        vehiculo.getTipo(),
+                        (vehiculo.getMarca() + " " + vehiculo.getModelo()),
+                        getUnidadValorString(vehiculo)[0],
+                        Double.valueOf(getUnidadValorString(vehiculo)[1]),
+                        totalRecibo, 
+                        vehiculo.getContribuyente().getAyuntamiento()     
+                );
+                nuevoRecibo.setIban(nuevoRecibo.getContribuyente().getIban());
+                nuevoRecibo.setBonificacion(nuevoRecibo.getContribuyente().getBonificacion());
+                nuevoRecibo.setExencion(nuevoRecibo.getVehiculos().getExencion());
+                nuevoRecibo.setEmail(nuevoRecibo.getContribuyente().getEmail());
+                nuevosRecibos.add(nuevoRecibo);
+
+                saveVehiculo(vehiculo);
+                saveRecibo(nuevoRecibo);
+                ReciboPDF.generarReciboPDF(vehiculo, importes, nuevoRecibo.getNumRecibo(), periodo, this.listadoOrdenanzas);
                 
-                fechaBajaDate = null;
-            }
-            Date fechaPadron;
-            try{
-                fechaPadron = Date.valueOf(getDateInDateFormat(calculaFechasPeriodo(periodo)[1]));
-            }catch(Exception e){
-                e.printStackTrace();
-                fechaPadron = new Date(1999,1,1);
-            }
-            Contribuyente cc = new Contribuyente((int)i, nombre, primerApellido, segundoApellido, NIF, ExcelManager.getCellValue(userSheetNumber, i , columnaDireccion), ExcelManager.getCellValue(userSheetNumber, i , columnaNumero), ExcelManager.getCellValue(userSheetNumber, i , columnaPaisCCC),ExcelManager.getCellValue(userSheetNumber, i , columnaCCC), IBAN, ExcelManager.getCellValue(userSheetNumber, i , columnaEmail), ExcelManager.getCellValue(userSheetNumber, i , columnaExcencion).charAt(0), Double.parseDouble(ExcelManager.getCellValue(userSheetNumber, i , columnaBonificacion)), fechaAltaDate,fechaBajaDate, null, null, null  );
-            ManagerDDBB.updateContribuyente(cc);
-            Lecturas lectura = new Lecturas(0,cc,periodo.substring(3), periodo.substring(0,2),(int)Float.parseFloat(ExcelManager.getCellValue(userSheetNumber,i, columnaLecturaAnterior)),(int)Float.parseFloat(ExcelManager.getCellValue(userSheetNumber,i, columnaLecturaActual)));//1T 2024
-            ManagerDDBB.updateLecturas(lectura);
-            Recibos recibo = new Recibos(contadorRecibos-1, cc, cc.getNifnie(),  cc.getDireccion(),  cc.getNombre(),  cc.getApellido1()+" "+cc.getApellido2(),   Date.valueOf(LocalDate.now()),  (int)Float.parseFloat(lecturaAnterior) , (int)Float.parseFloat(lecturaActual) ,  (int)Float.parseFloat(consumo),  fechaPadron,  Double.parseDouble(baseImponibleRecibo) ,  Double.parseDouble(ivaRecibo),  Double.parseDouble(totalRecibo),  IBAN, cc.getEemail(),  excencion,  null);//1T 2024
-            Recibos reciboTrasGuardado = ManagerDDBB.updateRecibos(recibo);
-
-            for (int j = 0; j < idImportes.length; j++) {
-                for (int k = 0; k < listaOrdenanzas.size(); k++) {
-                    if(listaOrdenanzas.get(k).getIdOrdenanza()==(int)Float.parseFloat(idImportes[j])){
-                        RelContribuyenteOrdenanza rco = new RelContribuyenteOrdenanza(0, cc, listaOrdenanzas.get(k));
-                        ManagerDDBB.updateRelContribuyenteOrdenanza(rco);
-                        break;
-                    }
+                contadorRecibos += 1;
+            }else{
+                //Generar xml error
+                StringBuilder textoError = new StringBuilder();
+                for (String error : listadoErrores) {
+                    textoError.append(error+". ");
                 }
-            }
-            ArrayList<Lineasrecibo> listadoLineasRecibo = ReciboPDF.generarLineasRecibo(i, calculadora, reciboTrasGuardado);
-            for (int j = 0; j < listadoLineasRecibo.size(); j++) {
-                ManagerDDBB.updateLineasRecibo(listadoLineasRecibo.get(j));
+                sbErrores.append(GeneradorRecibosXML.getXMLErrorVehiculo(vehiculo, textoError.toString()));
             }
 
         }
-        cerrarXMLRecibo(contadorBaseImponible+"", contadorIva+"", (contadorBaseImponible+contadorIva)+"",periodo);
-        ResumenPDF.generarResumen(contadorBaseImponible, contadorIva, periodo);
-        ConfigVariables.numeroPrimerRecibo = contadorRecibos-1;
+        GeneradorRecibosXML.saveXMLErrorVehiculo(sbErrores.toString());
+        GeneradorRecibosXML.saveXMLRecibo(sbRecibos.toString(), periodo, totalRecibos, contadorRecibos);
+        ResumenPDF.generarResumen(contadorRecibos, totalRecibos, periodo);
+
     }
-    private String getDateInDateFormat(String fecha){//  10/12/2023
-        if(fecha.isEmpty())return "";
-        return (fecha.substring(6)+"-"+fecha.substring(3,5)+"-"+fecha.substring(0,2));
-    }
-    /*
-    * METODOS PARA LA GENERACIÓN DEL XML DE RECIBOS
-    * */
-    private void generarXMLRecibo(String idContador, String Excencion, String idFilaExcel, String nombre, String apellido1, String apellido2, String nif, String iban, String lecturaActual, String lecturaAnterior, String consumo, String baseImponible, String ivaRecibo, String totalRecibo, String TotalBaseImponible, String TotalIva, String totalImporte, String periodo) throws IOException {
-        String nombreXML = "/recibos"+periodo.substring(0,2)+"_"+periodo.substring(3)+".xml";
-        boolean existeArchivo = new File(ruteXML_RECIBOS+nombreXML).exists();
-        try (FileWriter writer = new FileWriter(ruteXML_RECIBOS+nombreXML, true)) {
-            if (!existeArchivo) {
-                writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-                writer.write("<Recibos fechaPadron=\"" + periodo.substring(0,2)+" de "+periodo.substring(3)+ "\" totalBaseImponible=\"" +TotalBaseImponible+"\" totalIva=\""+TotalIva+"\" totalRecibos=\""+totalImporte+"\">\n");
+    private ArrayList<String> obtenerErroresVehiculo(String periodo, Vehiculos vehiculo, ArrayList<String> listadoErrores){
+        if(!fechasValidas(vehiculo, periodo)){
+            listadoErrores.add("Fechas incoherentes");
+        }
+        if(!matriculaValida(vehiculo)){
+            String tipoAnterior = vehiculo.getTipo();
+            vehiculo.setTipo("historico");
+            if(!matriculaValida(vehiculo)){
+                listadoErrores.add("Matricula Erronea");
             }
-            writer.write("  <Recibo idRecibo=\"" + idContador + "\">\n");
-            writer.write("    <Exencion>" + Excencion + "</Exencion>\n");
-            writer.write("    <idFilaExcel>" + idFilaExcel + "</idFilaExcel>\n");
-            writer.write("    <nombre>" + nombre + "</nombre>\n");
-            writer.write("    <primerApellido>" + apellido1 + "</primerApellido>\n");
-            writer.write("    <segundoApellido>" + apellido2 + "</segundoApellido>\n");
-            writer.write("    <NIF>" + nif + "</NIF>\n");
-            writer.write("    <IBAN>" + iban + "</IBAN>\n");
-            writer.write("    <lecturaActual>" + lecturaActual + "</lecturaActual>\n");
-            writer.write("    <lecturaAnterior>" + lecturaAnterior + "</lecturaAnterior>\n");
-            writer.write("    <consumo>" + consumo + "</consumo>\n");
-            writer.write("    <baseImponibleRecibo>" + baseImponible + "</baseImponibleRecibo>\n");
-            writer.write("    <ivaRecibo>" + ivaRecibo + "</ivaRecibo>\n");
-            writer.write("    <totalRecibo>" + totalRecibo + "</totalRecibo>\n");
-            writer.write("  </Recibo>\n");
+            vehiculo.setTipo(tipoAnterior);
         }
-    }
-    private void cerrarXMLRecibo(String TotalBaseImponible, String TotalIva, String totalImporte, String periodo) throws IOException {
-        // Leer todas las líneas del archivo
-        String nombreXML = "/recibos"+periodo.substring(0,2)+"_"+periodo.substring(3)+".xml";
-        List<String> lines = Files.readAllLines(Paths.get(ruteXML_RECIBOS+nombreXML));
-
-        // Modificar la segunda línea si el archivo contiene al menos dos líneas
-        if (lines.size() > 1) {
-            String segundaLineaOriginal = lines.get(1);
-            // Ejemplo de cómo sería la nueva segunda línea. Modificar según sea necesario.
-            String nuevaSegundaLinea = "<Recibos fechaPadron=\"" + periodo.substring(0,2)+" de "+periodo.substring(3)+ "\" totalBaseImponible=\"" +TotalBaseImponible+"\" totalIva=\""+TotalIva+"\" totalRecibos=\""+totalImporte+"\">";
-            lines.set(1, nuevaSegundaLinea);
+        if(!propietarioValido(vehiculo)){ //Aqui se asocia a cada vehiculo su propietario
+            if(!tienePropietario(vehiculo)){
+                 listadoErrores.add("Vehiculo sin propietario");
+            }else{
+                 listadoErrores.add("Vehiculo con propietario erróneo");
+            }   
         }
+        
+        
+        return listadoErrores;
 
-        // Añadir la línea de cierre del XML
-        lines.add("</Recibos>");
-
-        // Escribir todas las líneas de nuevo al archivo
-        Files.write(Paths.get(ruteXML_RECIBOS+nombreXML), lines);
-    }
-    private static String convertExcelDateToString(String excelDateStr, DateTimeFormatter formatter) {
-        double excelDate = Double.parseDouble(excelDateStr);
-        LocalDate date = LocalDate.of(1899, 12, 30).plusDays((long) excelDate);
-        return date.format(formatter);
-    }
-    private static String convertExcelDateToString(String excelDateStr) {
-        if(excelDateStr.isEmpty()) return "";
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        double excelDate = Double.parseDouble(excelDateStr);
-        LocalDate date = LocalDate.of(1899, 12, 30).plusDays((long) excelDate);
-        return date.format(formatter);
     }
 
-    private boolean isRowInPeriod(String periodo, int rowNum) throws FileNotFoundException {
-
-        String fechaAlta = ExcelManager.getCellValue(userSheetNumber, rowNum, columnaFechaAlta);
-        String fechaBaja = ExcelManager.getCellValue(userSheetNumber, rowNum, columnaFechaBaja);
-        // Define el formato del parseo
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        if(fechaBaja.equals("EMPTYROW")||fechaBaja.isEmpty()){
-            fechaBaja = "01/01/2099";
-        }else{
-            fechaBaja = convertExcelDateToString(fechaBaja, formatter);
+    private boolean propietarioValido(Vehiculos vehiculo) {
+        for (int i = 0; i < listadoContribuyentesValidos.size(); i++) {
+            if(listadoContribuyentesValidos.get(i).getNifnie().equals(vehiculo.getContribuyente().getNifnie())){
+                vehiculo.setContribuyente(listadoContribuyentesValidos.get(i));
+                return true;
+            }
         }
-        if(fechaAlta.equals("EMPTYROW")||fechaAlta.isEmpty()){
-            fechaAlta = "01/01/1800";
-        }else{
-            fechaAlta = convertExcelDateToString(fechaAlta, formatter);
-        }
-        // Parseo de las fechas
-        LocalDate dateAlta = LocalDate.parse(fechaAlta, formatter);
-        LocalDate dateBaja = LocalDate.parse(fechaBaja, formatter);
-
-
-        String fechaInicioTrimestre = calculaFechasPeriodo(periodo)[0];
-        String fechaFinTrimestre =  calculaFechasPeriodo(periodo)[1];
-
-        LocalDate dateInicioTrimestre = LocalDate.parse(fechaInicioTrimestre, formatter);
-        LocalDate dateFinTrimestre = LocalDate.parse(fechaFinTrimestre, formatter);
-        if(dateBaja.isAfter(dateInicioTrimestre)&&dateAlta.isBefore(dateFinTrimestre)){
-            return true;
-        }
+        
+        
         return false;
     }
-    private String[] calculaFechasPeriodo(String periodo){
-        String[] result = new String[2];
-        int numeroTrimestre = Integer.parseInt(periodo.substring(0,1));
-        String year = periodo.substring(3);
-        String fechaInicioTrimestre = "";
-        String fechaFinTrimestre = "";
-        switch (numeroTrimestre){
-            case 1:
-                fechaInicioTrimestre = "01/01/"+year;
-                fechaFinTrimestre = "31/03/"+year;
-                break;
-            case 2:
-                fechaInicioTrimestre = "01/04/"+year;
-                fechaFinTrimestre = "30/06/"+year;
-                break;
-            case 3:
-                fechaInicioTrimestre = "01/07/"+year;
-                fechaFinTrimestre = "30/09/"+year;
-                break;
-            case 4:
-                fechaInicioTrimestre = "01/10/"+year;
-                fechaFinTrimestre = "31/12/"+year;
-                break;
-            default:
-                throw new RuntimeException("Numero de trimestre no valido");
+
+    private boolean tienePropietario(Vehiculos vehiculo) {
+        if( vehiculo.getContribuyente().getNifnie() == null || vehiculo.getContribuyente().getNifnie().equals("EMPTYCELL")){
+            return false;
         }
-        result[0] = fechaInicioTrimestre;
-        result[1] = fechaFinTrimestre;
-        return result;
+        return true;
     }
+
+    private boolean matriculaValida(Vehiculos vehiculo) {
+        String tipo = vehiculo.getTipo().toLowerCase();
+        String matricula = vehiculo.getMatricula();
+        ArrayList<String> codigosMatricula = new ArrayList<>(Arrays.asList(
+                "A",    // Alicante
+                "AB",   // Albacete
+                "AL",   // Almería
+                "AV",   // Ávila
+                "B",    // Barcelona
+                "BA",   // Badajoz
+                "BI",   // Vizcaya
+                "BU",   // Burgos
+                "C",    // A Coruña
+                "CA",   // Cádiz
+                "CC",   // Cáceres
+                "CE",   // Ceuta
+                "CO",   // Córdoba
+                "CR",   // Ciudad Real
+                "CS",   // Castellón
+                "CU",   // Cuenca
+                "GC",   // Las Palmas (Gran Canaria)
+                "GI",   // Girona
+                "GR",   // Granada
+                "GU",   // Guadalajara
+                "H",    // Huelva
+                "HU",   // Huesca
+                "J",    // Jaén
+                "L",    // Lleida
+                "LE",   // León
+                "LO",   // La Rioja (Logroño)
+                "LU",   // Lugo
+                "M",    // Madrid
+                "MA",   // Málaga
+                "ML",   // Melilla
+                "MU",   // Murcia
+                "NA",   // Navarra
+                "O",    // Asturias (Oviedo)
+                "OR",   // Ourense
+                "P",    // Palencia
+                "PM",   // Baleares (Palma de Mallorca)
+                "PO",   // Pontevedra
+                "S",    // Cantabria (Santander)
+                "SA",   // Salamanca
+                "SE",   // Sevilla
+                "SG",   // Segovia
+                "SO",   // Soria
+                "SS",   // Gipuzkoa (San Sebastián)
+                "T",    // Tarragona
+                "TE",   // Teruel
+                "TF",   // Santa Cruz de Tenerife
+                "TO",   // Toledo
+                "V",    // Valencia
+                "VA",   // Valladolid
+                "VI",   // Álava (Vitoria)
+                "Z",    // Zaragoza
+                "ZA"    // Zamora
+        ));
+        if(matricula.length() > 9) { return false; }
+        switch (tipo) {
+            case "ciclomotor":
+                if(matricula.length() != 8 || matricula.charAt(0) != 'C' || !matricula.substring(1,5).matches("\\d+") || !matricula.substring(5).matches("[A-Z]+")){
+                    return false;
+                }
+                return true;
+            case "historico":
+                if(matricula.length() != 8 || matricula.charAt(0) != 'H' || !matricula.substring(1,5).matches("\\d+") || !matricula.substring(5).matches("[A-Z]+")){
+                    return false;
+                }
+                return true;
+            case "remolque":
+                if(Character.isDigit(matricula.charAt(matricula.length()-1))){ // CIUDAD 00...
+                    if(matricula.length() > 8 || matricula.length() < 2) { return false; }
+                    String iniciales = (!Character.isDigit(matricula.charAt(1)))? matricula.substring(0,2) : matricula.charAt(0)+"";
+                    matricula = matricula.substring(iniciales.length());
+                    return codigosMatricula.contains(iniciales) && matricula.matches("\\d+") ;
+                } else if (!Character.isDigit(matricula.charAt(matricula.length()-3))) { // R 0000 LLL
+                    if(matricula.length() != 8) {return false; }
+                    if(matricula.charAt(0) != 'R') {return false; }
+                    return matricula.substring(1,5).matches("\\d+") && matricula.substring(5).matches("[A-Z]+");
+                }else{// CIUDAD 00000 VE
+                    if(matricula.length() < 8) { return false; }
+                    if(!matricula.substring(matricula.length()-2).equals("VE")) {return false; }
+                    String iniciales = (!Character.isDigit(matricula.charAt(1)))? matricula.substring(0,2) : matricula.charAt(0)+"";
+                    matricula = matricula.substring(iniciales.length(), matricula.length()-2);
+                    return codigosMatricula.contains(iniciales) && matricula.matches("\\d+") ;
+                }
+            case "tractor":
+                if(Character.isDigit(matricula.charAt(matricula.length()-1))){ // CIUDAD 00...
+                    if(matricula.length() > 8 || matricula.length() < 2) { return false; }
+                    String iniciales = (!Character.isDigit(matricula.charAt(1)))? matricula.substring(0,2) : matricula.charAt(0)+"";
+                    matricula = matricula.substring(iniciales.length());
+                    return codigosMatricula.contains(iniciales) && matricula.matches("\\d+") ;
+                } else if (!Character.isDigit(matricula.charAt(matricula.length()-3))) { // R 0000 LLL
+                    if(matricula.length() != 8) {return false; }
+                    if(matricula.charAt(0) != 'E') {return false; }
+                    return matricula.substring(1,5).matches("\\d+") && matricula.substring(5).matches("[A-Z]+");
+                }else{// CIUDAD 00000 VE
+                    if(matricula.length() < 8) { return false; }
+                    if(!matricula.substring(matricula.length()-2).equals("VE")) {return false; }
+                    String iniciales = (!Character.isDigit(matricula.charAt(1)))? matricula.substring(0,2) : matricula.charAt(0)+"";
+                    matricula = matricula.substring(iniciales.length(), matricula.length()-2);
+                    return codigosMatricula.contains(iniciales) && matricula.matches("\\d+") && matricula.length() == 5 ;
+                }
+            case "turismo":
+            case "autobus":
+            case "camion":
+            case "motocicleta":
+                if(Character.isDigit(matricula.charAt(0))){ //0000 LLL
+                    if(matricula.length() != 7) {return false; }
+                    return matricula.substring(0,4).matches("\\d+") && matricula.substring(4).matches("[A-Z]+");
+                } else if (!Character.isDigit(matricula.charAt(matricula.length()-1))) { // CIUDAD 0000 L o LL
+                    if(matricula.length() < 6) {return false; }
+                    String iniciales = (!Character.isDigit(matricula.charAt(1)))? matricula.substring(0,2) : matricula.charAt(0)+"";
+                    String finales = (!Character.isDigit(matricula.charAt(matricula.length()-2)))?
+                            matricula.substring(matricula.length()-2) :
+                            matricula.charAt(matricula.length()-1)+"";
+                    matricula = matricula.substring(iniciales.length(),matricula.length()-finales.length());
+                    return codigosMatricula.contains(iniciales) && matricula.matches("\\d+") && matricula.length() ==4;
+                }else{
+                    String iniciales = (!Character.isDigit(matricula.charAt(1)))? matricula.substring(0,2) : matricula.charAt(0)+"";
+                    return codigosMatricula.contains(iniciales) && matricula.substring(iniciales.length()).matches("\\d+") && matricula.substring(iniciales.length()).length()<= 6 ;
+                }
+            default:
+                return false;
+        }
+    }
+
+    private boolean fechasValidas(Vehiculos vehiculo, String periodo) {
+        //TODO hay casos null sin comprobar
+        if(vehiculo.getFechaAlta() == null){
+            //System.out.println("Vehiculo con id "+ vehiculo.getIdVehiculo()+ " las fechas no son validas por no tener fecha de alta");
+            return false;
+        }
+        if(vehiculo.getFechaMatriculacion() == null){
+            //System.out.println("Vehiculo con id "+ vehiculo.getIdVehiculo()+ " las fechas no son validas por no tener fecha de matriculacion");
+            return false;
+        }
+        if(vehiculo.getFechaBaja() == null && vehiculo.getFechaBajaTemporal()== null) {
+            if(vehiculo.getFechaAlta().before(vehiculo.getFechaMatriculacion())){ 
+             //System.out.println("Vehiculo con id "+ vehiculo.getIdVehiculo()+ " las fechas no son  validas porque la fecha de alta es anterior a la de matriculacion");
+             return false;
+            }
+            return true;
+        }
+            if(vehiculo.getFechaBaja() != null){
+                if(!vehiculo.getFechaAlta().before(vehiculo.getFechaBaja())){
+                    //System.out.println("Vehiculo con id "+ vehiculo.getIdVehiculo()+ " las fechas no son  validas porque la fecha de alta es posterior a la baja");
+                    return false; 
+                }
+            }
+        
+        if(vehiculo.getFechaAlta().before(vehiculo.getFechaMatriculacion())){ 
+            //System.out.println("Vehiculo con id "+ vehiculo.getIdVehiculo()+ " las fechas no son  validas porque la fecha de alta es anterior a la de matriculacion");
+            return false;
+        }
+        
+        if(vehiculo.getFechaBajaTemporal() != null && vehiculo.getFechaBaja() != null){
+            if(vehiculo.getFechaBajaTemporal().after(vehiculo.getFechaBaja())){
+                //System.out.println("Vehiculo con id "+ vehiculo.getIdVehiculo()+ " las fechas no son  validas porque la fecha de baja temporal es posterior a la fecha de baja");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+}
+class GeneradorRecibosXML{
+    /*
+     * METODOS PARA LA GENERACIÓN DEL XML DE RECIBOS
+     * */
+    public static String getXMLRecibo(Vehiculos vehiculo, float totalRecibo, int idRecibo) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("  <Recibo idRecibo=\"").append(idRecibo).append("\">\n");
+        sb.append("    <Exencion>").append(vehiculo.getExencion()).append("</Exencion>\n");
+        sb.append("    <idFilaExcelVehiculo>").append(vehiculo.getIdVehiculo()+1).append("</idFilaExcelVehiculo>\n");
+        sb.append("    <nombre>").append(vehiculo.getContribuyente().getNombre()).append("</nombre>\n");
+        sb.append("    <primerApellido>").append(vehiculo.getContribuyente().getApellido1()).append("</primerApellido>\n");
+        sb.append("    <segundoApellido>").append(vehiculo.getContribuyente().getApellido2()).append("</segundoApellido>\n");
+        sb.append("    <NIF>").append(vehiculo.getContribuyente().getNifnie()).append("</NIF>\n");
+        sb.append("    <IBAN>").append(vehiculo.getContribuyente().getIban()).append("</IBAN>\n");
+        sb.append("    <tipoVehiculo>").append(vehiculo.getTipo()).append("</tipoVehiculo>\n");
+        sb.append("    <marcaModelo>").append(vehiculo.getMarca()).append(" ").append(vehiculo.getModelo()).append("</marcaModelo>\n");
+        sb.append("    <matricula>").append(vehiculo.getMatricula()).append("</matricula>\n");
+        sb.append("    <totalRecibo>").append(totalRecibo).append("</totalRecibo>\n");
+        sb.append("  </Recibo>\n");
+
+        return sb.toString();
+    }
+    public static boolean saveXMLRecibo(String xmlData, String periodo, float totalRecibos, int contadorRecibos) {
+        try (FileWriter writer = new FileWriter("resources/Recibos.xml", false)) {
+
+            writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+            writer.write("<Recibos fechaPadron=\"" + "IVTM de " + periodo + "\" totalPadron=\"" + String.format("%.2f", totalRecibos) + "\" numeroTotalRecibos=\"" + contadorRecibos + "\">\n");
+            writer.write(xmlData);
+            writer.write("</Recibos>\n");
+
+        } catch (Exception e) {
+            System.out.println("No se ha podido guardar el xml de recibos");
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public static String getXMLErrorVehiculo(Vehiculos vehiculo, String error) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("  <Vehiculo id=\"").append(vehiculo.getIdVehiculo()+1).append("\">\n");
+        sb.append("    <Marca>").append(vehiculo.getMarca()).append("</Marca>\n");
+        sb.append("    <Modelo>").append(vehiculo.getModelo()).append("</Modelo>\n");
+        sb.append("    <Error>").append(error.substring(0, error.length()-1)).append("</Error>\n");
+        sb.append("  </Vehiculo>\n");
+
+        return sb.toString();
+    }
+    public static boolean saveXMLErrorVehiculo(String xmlData) {
+        try (FileWriter writer = new FileWriter("resources/ErroresVehiculos.xml", false)) {
+
+            writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+            writer.write("<Vehiculos>\n");
+            writer.write(xmlData);
+            writer.write("</Vehiculos>\n");
+        } catch (Exception e) {
+            System.out.println("No se ha podido guardar el xml de erres de vehiculos");
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+
+
+}
+
+class CalculadoraImporte{
+
+    public static float[] getImporte(Vehiculos vehiculo,  ArrayList<Ordenanza> ordenanzas, String periodo) {
+
+        //Obtenemos ordenanzas relacionadas al tipo de vehiculo y municipio
+        ArrayList<Ordenanza> ordenzasAsociadas = getOrdenanzas(vehiculo, ordenanzas);
+
+        //Calculamos el numero de trimestres a pagar
+        int trimestres = getTrimestres(vehiculo, periodo);
+
+        //Gesionamos forma de calcular ese vehiculo con esa ordenanza
+        float importeInicial = (float)calculaImporte(ordenzasAsociadas, trimestres, vehiculo);
+        //Aplicamos exenciones y bonificaciones
+
+        if((vehiculo.getExencion() + "").equals("S")){
+            return new float[]{importeInicial, 0f, trimestres};
+        }
+        float bonificacion = vehiculo.getContribuyente().getBonificacion().floatValue();
+        //retornamos importe final
+        float importeFinalAnual  = importeInicial * (1-bonificacion/100) ;
+        toStringRecibo(vehiculo,  periodo, importeInicial, importeFinalAnual);
+        return new float[]{importeInicial, importeFinalAnual, trimestres}; //aplicamos la bonificacion
+    }
+    private static void toStringRecibo(Vehiculos vehiculo,  String periodo, float  importeTotal, float importeFinal){
+        Contribuyente cont = vehiculo.getContribuyente();
+        LocalDate fechaHoy = LocalDate.now();
+        DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String fechaFormateada = fechaHoy.format(formato);
+        
+        System.out.println("___________________________Recibo Generado_____________________________");
+        System.out.println("| "+ cont.getNombre() + " " + cont.getApellido1() + " " + cont.getApellido2() + " " + cont.getNifnie()+ " "+ cont.getDireccion() + " IBAN: "+ cont.getIban() + " Bonificación:" + cont.getBonificacion() + " |");
+        System.out.println("| Fecha de recibo: "+fechaFormateada +" Periodo seleccionado: 01/01/" + periodo+ " |" );
+        System.out.println("| Tipo: "+ vehiculo.getTipo() + " Marca-Modelo: " + vehiculo.getMarca() + "-" + vehiculo.getModelo() + " Matrícula: " + vehiculo.getMatricula()+ " Bastidor: "+ vehiculo.getNumeroBastidor() + " "+ getUnidadValorString(vehiculo)[0] + ": "+ getUnidadValorString(vehiculo) [1] + " Importe anual" + importeTotal + " Exencion " + vehiculo.getExencion()+ " Importe final "+ importeFinal + " |");
+        System.out.println("____________________________________________________________________________");
+    }
+    private static ArrayList<Ordenanza> getOrdenanzas(Vehiculos vehiculo,ArrayList<Ordenanza> ordenanzas) {
+        ArrayList<Ordenanza> listadoOrdenanzasResultado = new ArrayList<>();
+        for (int i = 0; i < ordenanzas.size(); i++) {
+            if(ordenanzas.get(i).getAyuntamiento().equals(vehiculo.getContribuyente().getAyuntamiento()) && vehiculo.getTipo().equals(ordenanzas.get(i).getTipoVehiculo())){
+                listadoOrdenanzasResultado.add(ordenanzas.get(i));
+            }
+        }
+        if(listadoOrdenanzasResultado.isEmpty()){throw new RuntimeException("Se esta intentado calcular el recibo de un vehiculo pero no se encontraron ordenanzas asociadas.");}
+        return listadoOrdenanzasResultado;
+    }
+    public static int getTrimestres(Vehiculos vehiculo, String periodo) {
+        Date fechaAlta = vehiculo.getFechaAlta();
+        if (fechaAlta == null) {throw new RuntimeException("Se está intentando calcular trimestres de un vehículo sin fecha de alta");}
+        Date fechaBaja = vehiculo.getFechaBaja();
+        Date fechaBajaTemporal = vehiculo.getFechaBajaTemporal();
+
+        // 1) Creamos el límite superior del rango: 31/12 del año 'periodo'
+        int yearPeriod = Integer.parseInt(periodo);
+        Calendar datePeriodo = Calendar.getInstance();
+        datePeriodo.clear();
+        datePeriodo.set(yearPeriod, Calendar.DECEMBER, 31);
+
+        // 2) Seleccionamos fechaFinRango (bajaTemporal > baja > ficticia 31/12/2100)
+        Calendar fin = Calendar.getInstance();
+        if (fechaBajaTemporal != null) {
+            fin.setTime(fechaBajaTemporal);
+        } else if (fechaBaja != null) {
+            fin.setTime(fechaBaja);
+        } else {
+            fin.clear();
+            fin.set(2100, Calendar.DECEMBER, 31);
+        }
+
+        // 3) Rellenamos el Calendar de alta
+        Calendar alta = Calendar.getInstance();
+        alta.setTime(fechaAlta);
+
+        int startYear  = alta.get(Calendar.YEAR);
+        int endYear    = fin.get(Calendar.YEAR);
+
+        // 4) Caso: alta antes de X y baja después de X → 4 trimestres
+        if (startYear < yearPeriod && endYear > yearPeriod) {
+            return 4;
+        }
+
+        // 5) Caso: baja antes de X, o alta después de X → 0 trimestres
+        if (endYear < yearPeriod || startYear > yearPeriod) {
+                    
+            return 0;
+        }
+
+        // 6) Ahora, parte de la vida cae dentro de X
+        int startMonth = (startYear == yearPeriod
+                ? alta.get(Calendar.MONTH)
+                : Calendar.JANUARY);
+        int endMonth   = (endYear   == yearPeriod
+                ? fin.get(Calendar.MONTH)
+                : Calendar.DECEMBER);
+
+        // 7) Calculamos cuántos trimestres quedan desde cada mes hasta final de año
+        int desdeStart = calculaTrimestresPorRango(startMonth);
+        int desdeEnd   = calculaTrimestresPorRango(endMonth);
+        
+        // 8) Trimestres = diferencia + 1
+        return desdeStart - desdeEnd + 1;
+    }
+    private static int calculaTrimestresPorRango(int month){
+        switch(month){
+            case Calendar.JANUARY:
+            case Calendar.FEBRUARY:
+            case Calendar.MARCH:
+                return 4;
+            case Calendar.APRIL:
+            case Calendar.MAY:
+            case Calendar.JUNE:
+                return 3;
+            case Calendar.JULY:
+            case Calendar.AUGUST:
+            case Calendar.SEPTEMBER:
+                return 2;
+            case Calendar.OCTOBER:
+            case Calendar.NOVEMBER:
+            case Calendar.DECEMBER:
+                return 1;
+        }
+        throw new RuntimeException("No se puede calcular trimestres a partir de un mes con valor Calendar:"+month);
+    }
+    private static double calculaImporte(ArrayList<Ordenanza> ordenanzas, int trimestres, Vehiculos vehiculo) {
+        double result = 0;
+        Double cantidadEvaluada = (double) 0;
+        switch (vehiculo.getTipo().toLowerCase()) {
+            case "ciclomotor":
+                cantidadEvaluada = vehiculo.getCentimetroscubicos();
+                break;
+            case "historico":
+                cantidadEvaluada = vehiculo.getCaballosFiscales();
+                break;
+            case "remolque":
+                cantidadEvaluada = vehiculo.getKgcarga();
+                break;
+            case "tractor":
+                cantidadEvaluada = vehiculo.getCaballosFiscales();
+                break;
+            case "turismo":
+                cantidadEvaluada = vehiculo.getCaballosFiscales();
+                break;
+            case "autobus":
+                cantidadEvaluada = vehiculo.getPlazas();
+                break;
+            case "camion":
+                cantidadEvaluada = vehiculo.getKgcarga();
+                break;
+            case "motocicleta":
+                cantidadEvaluada = vehiculo.getCentimetroscubicos();
+                break;
+
+            default:
+                throw new RuntimeException("Error al calcular el importe del vehiculo con tipo "+vehiculo.getTipo());
+        }
+        for (int i = 0; i < ordenanzas.size(); i++) {
+            if (ordenanzas.get(i).getMinimoRango() <= cantidadEvaluada && ordenanzas.get(i).getMaximoRango() >= cantidadEvaluada) {
+                result = ordenanzas.get(i).getImporte();
+                vehiculo.setOrdenanza(ordenanzas.get(i));
+                
+            }
+        }
+        result =  result * (trimestres/4f);
+        BigDecimal bd = new BigDecimal(result).setScale(6, RoundingMode.CEILING);
+        return bd.doubleValue(); 
+    }
+        public static String[] getUnidadValorString(Vehiculos vehiculo) {
+        String result = "";
+        Double cantidadEvaluada = (double) 0;
+        switch (vehiculo.getTipo().toLowerCase()) {
+            case "ciclomotor":
+                result = "Centimetros cúbicos";
+                cantidadEvaluada = vehiculo.getCentimetroscubicos();
+                break;
+            case "historico":
+                result = "Caballos";
+                cantidadEvaluada = vehiculo.getCaballosFiscales();
+                break;
+            case "remolque":
+                result = "Kg";
+                cantidadEvaluada = vehiculo.getKgcarga();
+                break;
+            case "tractor":
+                result = "Caballos";
+                cantidadEvaluada = vehiculo.getCaballosFiscales();
+                break;
+            case "turismo":
+                result = "Caballos";
+                cantidadEvaluada = vehiculo.getCaballosFiscales();
+                break;
+            case "autobus":
+                result = "Plazas";
+                cantidadEvaluada = vehiculo.getPlazas();
+                break;
+            case "camion":
+                result = "Kg";
+                cantidadEvaluada = vehiculo.getKgcarga();
+                break;
+            case "motocicleta":
+                result = "Centimetros cúbicos";
+                cantidadEvaluada = vehiculo.getCentimetroscubicos();
+                break;
+
+            default:
+                throw new RuntimeException("Error al calcular el importe del vehiculo con tipo "+vehiculo.getTipo());
+        }
+        return new String[]{result, cantidadEvaluada+"" };
+    }
+
 }
